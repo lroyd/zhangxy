@@ -1,0 +1,10 @@
+---- snprintf Matches (9 in 4 files) ----
+Json.c (src):					len = snprintf(num_buf, sizeof(num_buf), "%d",(int)_pElem->value.num);
+Json.c (src):					len = snprintf(num_buf, sizeof(num_buf), "%f", _pElem->value.num);
+Os_unix.c (src):		snprintf(pThread->m_aucName, sizeof(pThread->m_aucName),_strName, pThread->m_tTid);
+Os_unix.c (src):		snprintf(pThread->m_aucName, sizeof(pThread->m_aucName),"thr%p", (void*)pThread->m_tTid);
+Os_unix.c (src):		snprintf(pThread->m_aucName, ZXY_MAX_NAME_LEN, _strName, pThread);
+Os_unix.c (src):		snprintf(_pMutex->m_aucName, ZXY_MAX_NAME_LEN, name, _pMutex);
+Pool.c (src):			snprintf(_pPool->m_strName, sizeof(_pPool->m_strName), _strName, _pPool);
+Sock.c (src):		snprintf(port, sizeof(port), ":%d", SOCK_AddrGetPort(addr));
+Sock.c (src):    snprintf(buf, size, "%s%s%s%s", bquote, txt, equote, port);
