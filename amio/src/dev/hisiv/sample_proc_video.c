@@ -18,6 +18,8 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#if AMIO_DEV_HAS_HIVIDEO
+
 #include "hi_mipi.h"
 #include "sample_comm.h"
 #include "video_info.h"
@@ -683,6 +685,6 @@ int SAMPLE_PROC_VENC_Start(VENC_CHN VencChn, PAYLOAD_TYPE_E enType, VIDEO_NORM_E
 
 
 
-
+#endif
 
 

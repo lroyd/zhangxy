@@ -18,9 +18,9 @@ int main(int argc, char **argv)
 	
 	//hivideo_test();
 	
-	//hivideo_rtsp_test();
+	hivideo_rtsp_test();
 	
-	hivideo_rtmp_test();
+	//hivideo_rtmp_test();
 }
 
 

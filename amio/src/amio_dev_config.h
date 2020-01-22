@@ -12,10 +12,10 @@
 //设置支持的驱动
 #define AMIO_DEV_HAS_NULL		(1)
 
-
+#if CPU_TYPE
 #define AMIO_DEV_HAS_HIAUDIO	(1)	//海思音频
 #define AMIO_DEV_HAS_HIVIDEO	(1)	//海思视频	
-	
+#endif
 
 
 

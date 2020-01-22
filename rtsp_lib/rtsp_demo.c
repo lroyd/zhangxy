@@ -1497,13 +1497,14 @@ int rtsp_do_event (rtsp_demo_handle demo)
 					cc1 = NULL;
 					break;
 				}
-
+				printf("0000000000000 [%d]\r\n", reqmsg.type);
 				if (reqmsg.type == RTSP_MSG_TYPE_INTERLEAVED) {
 					//TODO process RTCP over TCP frame
 					rtsp_msg_free(&reqmsg);
+					printf("1111111111111\r\n");
 					continue;
 				}
-
+				printf("2222222222\r\n");
 				if (reqmsg.type != RTSP_MSG_TYPE_REQUEST) {
 					err("not request frame.\n");
 					rtsp_msg_free(&reqmsg);
