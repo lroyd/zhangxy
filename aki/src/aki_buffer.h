@@ -15,7 +15,7 @@ extern "C" {
 //#define AKI_USE_TASK 
 /*************************************************************************/
 
-//²»Ö§³Ö¶¯Ì¬·ÖÅä£¬ÒòÎª²»ºÃ¼ÇÂ¼ÊÍ·Å
+//ä¸æ”¯æŒåŠ¨æ€åˆ†é…ï¼Œå› ä¸ºä¸å¥½è®°å½•é‡Šæ”¾
 enum{
 	AKI_BUF_STATUS_FREE,
 	AKI_BUF_STATUS_UNLINKED,
@@ -34,24 +34,32 @@ enum{
 
   
 /**************************************************************************/
+typedef struct _tagQueue
+{
+    void	*m_pFirst;	
+    void    *m_pLast;
+    unsigned short	m_u16Count;
+}T_AkiQueue;
+
+
 typedef struct _tagBufferHdr {
-	struct _tagBufferHdr	*m_pNext;	//ÏÂÒ»¸ö°ü
-    char m_u8PoolId;		//µ±Ç°pool id
-    char m_u8TaskId;	//task id¶àÈÎÎñÊ¹ÓÃ
-    char m_u8Status;		//µ±Ç°buffer×´Ì¬
-    char m_u8Type;		//Î´Ê¹ÓÃ	
+	struct _tagBufferHdr	*m_pNext;	//ä¸‹ä¸€ä¸ªåŒ…
+    char m_u8PoolId;		//å½“å‰pool id
+    char m_u8TaskId;	//task idå¤šä»»åŠ¡ä½¿ç”¨
+    char m_u8Status;		//å½“å‰bufferçŠ¶æ€
+    char m_u8Type;		//æœªä½¿ç”¨	
 }T_AkiPackHdr;
 
 
 typedef struct _tagFreeq
 {
-    T_AkiPackHdr *in_pFirst;	//¼ÇÂ¼µ±Ç°µÚÒ»¸ö¿ÉÓÃ£¬»áÒÆ¶¯
+    T_AkiPackHdr *in_pFirst;	//è®°å½•å½“å‰ç¬¬ä¸€ä¸ªå¯ç”¨ï¼Œä¼šç§»åŠ¨
     T_AkiPackHdr *in_pLast;
 
-    unsigned short    m_u16PackSize;		//Ã¿¸ö°ü¿ÉÊ¹ÓÃ´óĞ¡
-    unsigned short    m_u16PackTotal;		//°üµÄ¸öÊı
-    unsigned short    m_u16PackCurCnt;	//ÒÑÊ¹ÓÃ°üµÄ¸öÊı
-    unsigned short    m_u16PackMaxCnt;	//ÀúÊ·Ê¹ÓÃ×î´ó°ü¸öÊı
+    unsigned short    m_u16PackSize;		//æ¯ä¸ªåŒ…å¯ä½¿ç”¨å¤§å°
+    unsigned short    m_u16PackTotal;		//åŒ…çš„ä¸ªæ•°
+    unsigned short    m_u16PackCurCnt;	//å·²ä½¿ç”¨åŒ…çš„ä¸ªæ•°
+    unsigned short    m_u16PackMaxCnt;	//å†å²ä½¿ç”¨æœ€å¤§åŒ…ä¸ªæ•°
 
 }T_AkiFreeq;
 
@@ -61,10 +69,10 @@ typedef struct _tagAkiBuffer
 
     char			*m_apPoolStart[AKI_BUFFER_POOLS_TOTAL_MAX];
     char			*m_apPoolEnd[AKI_BUFFER_POOLS_TOTAL_MAX];
-    unsigned short	m_ausPoolSize[AKI_BUFFER_POOLS_TOTAL_MAX];	//´øÍ·£¬×î´ó65535£º65k
+    unsigned short	m_ausPoolSize[AKI_BUFFER_POOLS_TOTAL_MAX];	//å¸¦å¤´ï¼Œæœ€å¤§65535ï¼š65k
 
     unsigned short	m_u16PoolAccessMask;
-    char			m_aucPoolList[AKI_BUFFER_POOLS_TOTAL_MAX];	//·ÃÎÊÈ¨ÏŞÊ¹ÓÃ
+    char			m_aucPoolList[AKI_BUFFER_POOLS_TOTAL_MAX];	//è®¿é—®æƒé™ä½¿ç”¨
 	
     char			m_u8CurrTotalPools;
 	pthread_mutex_t m_tLock;
@@ -78,20 +86,33 @@ void AKI_BufferInit(T_AkiBuffer *_pAkiBuffer);
 
 //id:0+
 int AKI_BufferCreatePool(T_AkiBuffer *_pAki, void *_pUAddress, unsigned short _u16USize, unsigned short _u16Size, char *_pOut);
-
 void *AKI_BufferDestroyPool(T_AkiBuffer *_pAki, char _u8Pid);
 
 unsigned short AKI_PoolGetTotal(T_AkiBuffer *_pAki, char _u8Pid);
 
 unsigned short AKI_PoolGetFreeTotal(T_AkiBuffer *_pAki, char _u8Pid);
 
+typedef void (T_Package);
+T_Package *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size);
+void AKI_PutPackage(T_AkiBuffer *_pAki, T_Package *_pPack);
 
-void *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size);
-void AKI_PutPackage(T_AkiBuffer *_pAki, void *_pPack);
+T_Package *AKI_CheckStartAddr(T_AkiBuffer *_pAki, void *_pUsrAddr);
+T_Package *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid);
 
-void *AKI_CheckStartAddr(T_AkiBuffer *_pAki, void *_pUsrAddr);
-void *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid);
+/*********************************************************************/
+//ä½¿ç”¨aki_queueç³»é˜Ÿåˆ—ï¼Œå…¶ä¸­çš„bufå¿…é¡»æ˜¯AKI_GetPackageçš„package
+void AKI_QueueInit(T_AkiQueue *_pQueue);
+void AKI_QueueAddTail(T_AkiQueue *_pQueue, T_Package *p_buf);
+void AKI_QueueAddHead(T_AkiQueue *_pQueue, T_Package *p_buf);
+T_Package *AKI_QueueDelHead(T_AkiQueue *_pQueue);
+T_Package *AKI_QueueRemove(T_AkiQueue *_pQueue, T_Package *p_buf);
+T_Package *AKI_QueueGetFirst(T_AkiQueue *_pQueue);
+T_Package *AKI_QueueGetLast(T_AkiQueue *_pQueue);
+T_Package *AKI_QueueGetNext(T_Package *p_buf);
+char AKI_QueueIsEmpty(T_AkiQueue *_pQueue);
 
+
+/*********************************************************************/
 //debug
 char *AKI_BufferPrint(T_AkiBuffer *_pAki, char *_pBuf, int _u32Len);
 char *AKI_BufferPrintUsage(T_AkiBuffer *_pAki, char *_pBuf, int _u32Len);
