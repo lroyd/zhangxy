@@ -7,6 +7,14 @@
 
 #include "aki_buffer.h"
 
+/******************************************************************/
+//#define AKI_USE_OSLIB
+//#define AKI_USE_TASK
+//#define AKI_USE_LOCK
+
+/******************************************************************/
+
+
 
 #ifdef AKI_USE_OSLIB
 	#include "console.h"
@@ -20,8 +28,8 @@
 #ifdef AKI_USE_TASK
 	#include "aki_task.h"
 #else
-	#define AKI_TASK_INVALID    		(0x0F)	//Î´±»·ÖÅä
-	#define AKI_TASK_GET_ID()			(0)		//ÒÑ¾­±»·ÖÅä
+	#define AKI_TASK_INVALID    		(0x0F)	//æœªè¢«åˆ†é…
+	#define AKI_TASK_GET_ID()			(0)		//å·²ç»è¢«åˆ†é…
 #endif
 
 
@@ -78,12 +86,12 @@ static void init_free_queue(T_AkiBuffer *_pAki, char _ucId, unsigned short _usSi
     
 
     tempsize = (int)AKI_ALIGN_SIZE(_usSize);
-    act_size = (unsigned short)(tempsize + AKI_BUFFER_PADDING_SIZE);	//¼ÆËãºóµ¥¸öµÄ´óĞ¡£¨´øÍ·£¬ÏòÏÂÈ¡Éá£©
+    act_size = (unsigned short)(tempsize + AKI_BUFFER_PADDING_SIZE);	//è®¡ç®—åå•ä¸ªçš„å¤§å°ï¼ˆå¸¦å¤´ï¼Œå‘ä¸‹å–èˆï¼‰
 
     if(_pAddress)
     {
-        p_cb->m_apPoolStart[_ucId] = (char *)_pAddress;		//ÆğÊ¼µØÖ·
-        p_cb->m_apPoolEnd[_ucId]   = (char *)_pAddress + (act_size * _usTotal);	//½áÊøµØÖ·
+        p_cb->m_apPoolStart[_ucId] = (char *)_pAddress;		//èµ·å§‹åœ°å€
+        p_cb->m_apPoolEnd[_ucId]   = (char *)_pAddress + (act_size * _usTotal);	//ç»“æŸåœ°å€
     }
 
     p_cb->m_ausPoolSize[_ucId]  = act_size;
@@ -115,7 +123,7 @@ static void init_free_queue(T_AkiBuffer *_pAki, char _ucId, unsigned short _usSi
     return;
 }
 
-//¸ù¾İµ±Ç°_pPack»ñÈ¡_pPackËùÔÚpoolÖĞµÄsize
+//æ ¹æ®å½“å‰_pPackè·å–_pPackæ‰€åœ¨poolä¸­çš„size
 static unsigned short get_buf_size(T_AkiBuffer *_pAki, void *_pPack)
 {
 	T_AkiBuffer	*p_cb = (T_AkiBuffer *)_pAki;
@@ -182,7 +190,7 @@ int AKI_PoolSetPermission(T_AkiBuffer *_pAkiBuffer, char _u8Pid, char _u8Perm)
 }
 
 
-//µ¥¶À´´½¨pool´óĞ¡
+//å•ç‹¬åˆ›å»ºpoolå¤§å°
 int AKI_BufferCreatePool(T_AkiBuffer *_pAki, void *_pUAddress, unsigned short _u16USize, unsigned short _u16Size,  char *_pOut)
 {
 	T_AkiBuffer *p_cb = _pAki;
@@ -190,10 +198,10 @@ int AKI_BufferCreatePool(T_AkiBuffer *_pAki, void *_pUAddress, unsigned short _u
 	unsigned short u16Size = 0, u16Total;
     if (_u16Size > AKI_BUFFER_SIZE_MAX) return (-1);
 	
-	u16Size = (_u16Size + AKI_BUFFER_PADDING_SIZE);	//²»ÓÃ¶ÔÆä
+	u16Size = (_u16Size + AKI_BUFFER_PADDING_SIZE);	//ä¸ç”¨å¯¹å…¶
 	u16Total = _u16USize/u16Size;
 	
-    /* ²éÕÒµÚÒ»¸ö¿ÉÓÃµÄÎ»ÖÃ */
+    /* æŸ¥æ‰¾ç¬¬ä¸€ä¸ªå¯ç”¨çš„ä½ç½® */
     for (u8Id = 0; u8Id < AKI_BUFFER_POOLS_TOTAL_MAX; u8Id++){
         if (!p_cb->m_apPoolStart[u8Id])
             break;
@@ -205,7 +213,7 @@ int AKI_BufferCreatePool(T_AkiBuffer *_pAki, void *_pUAddress, unsigned short _u
 	
 	init_free_queue(p_cb, u8Id, _u16Size, u16Total, _pUAddress);
 	add_to_pool_list(p_cb, u8Id);
-	AKI_PoolSetPermission(p_cb, u8Id, AKI_POOL_PUBLIC);	//Ä¬ÈÏÈ¨ÏŞ£¬ÓĞĞèÒªµ¥¶ÀÔÚĞŞ¸Ä
+	AKI_PoolSetPermission(p_cb, u8Id, AKI_POOL_PUBLIC);	//é»˜è®¤æƒé™ï¼Œæœ‰éœ€è¦å•ç‹¬åœ¨ä¿®æ”¹
 	p_cb->m_u8CurrTotalPools++;
 	if (_pOut) *_pOut = u8Id;
 	
@@ -213,7 +221,7 @@ int AKI_BufferCreatePool(T_AkiBuffer *_pAki, void *_pUAddress, unsigned short _u
 }
 
 
-//·µ»Øµ±Ç°idµÄÊı¾İÖ¸Õë£¬ÒÔ¹©Íâ²ãÊÍ·Å
+//è¿”å›å½“å‰idçš„æ•°æ®æŒ‡é’ˆï¼Œä»¥ä¾›å¤–å±‚é‡Šæ”¾
 void *AKI_BufferDestroyPool(T_AkiBuffer *_pAki, char _u8Pid)
 {
     T_AkiBuffer	*p_cb = _pAki;
@@ -240,7 +248,7 @@ void *AKI_BufferDestroyPool(T_AkiBuffer *_pAki, char _u8Pid)
         remove_from_pool_list(p_cb, _u8Pid);
         p_cb->m_u8CurrTotalPools--;
     }else{
-		//»¹ÓĞÈËÔÚÊ¹ÓÃ£¬²»¿ÉÒÔÊÍ·Å
+		//è¿˜æœ‰äººåœ¨ä½¿ç”¨ï¼Œä¸å¯ä»¥é‡Šæ”¾
 		ZXY_ELOG("delete pool failed, some pack not free!!");
 	}
 
@@ -249,7 +257,7 @@ void *AKI_BufferDestroyPool(T_AkiBuffer *_pAki, char _u8Pid)
     return p;
 }
 
-//»ñÈ¡Ã¿¸öpoolÖĞ×Ü¹²°üÊı
+//è·å–æ¯ä¸ªpoolä¸­æ€»å…±åŒ…æ•°
 unsigned short AKI_PoolGetTotal(T_AkiBuffer *_pAki, char _u8Pid)
 {
 	T_AkiBuffer	*p_cb = _pAki;
@@ -257,7 +265,7 @@ unsigned short AKI_PoolGetTotal(T_AkiBuffer *_pAki, char _u8Pid)
     return (p_cb->in_atFreeq[_u8Pid].m_u16PackTotal);
 }
 
-//»ñÈ¡Ã¿¸öpoolÖĞ¿ÕÏĞ°üÊı
+//è·å–æ¯ä¸ªpoolä¸­ç©ºé—²åŒ…æ•°
 unsigned short AKI_PoolGetFreeTotal(T_AkiBuffer *_pAki, char _u8Pid)
 {
 	T_AkiBuffer	*p_cb = _pAki;
@@ -268,7 +276,7 @@ unsigned short AKI_PoolGetFreeTotal(T_AkiBuffer *_pAki, char _u8Pid)
 }
 
 
-void *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size)
+T_Package *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size)
 {
 	T_AkiBuffer	*p_cb = _pAki;
     int i;
@@ -279,16 +287,16 @@ void *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size)
 
 	AKI_BUFFER_LOCK(p_cb);
 
-    /* ÕÒµ½µÚÒ»¸ö·ûºÏ´óĞ¡µÄ»º³å³Ø */
+    /* æ‰¾åˆ°ç¬¬ä¸€ä¸ªç¬¦åˆå¤§å°çš„ç¼“å†²æ±  */
     for (i = 0; i < p_cb->m_u8CurrTotalPools; i++){
         if (_u16Size <= p_cb->in_atFreeq[p_cb->m_aucPoolList[i]].m_u16PackSize){
-            /* ¸ù¾İÑÚÂëÅäÖÃÊ¹ÓÃÈ¨ÏŞ */
+            /* æ ¹æ®æ©ç é…ç½®ä½¿ç”¨æƒé™ */
             if (((unsigned short)1 << p_cb->m_aucPoolList[i]) & p_cb->m_u16PoolAccessMask){
 				continue;
 			}
 
-			Q = &p_cb->in_atFreeq[p_cb->m_aucPoolList[i]];	/* µÚi¸ö»º³å³ØµÄ¿ÕÏĞÁ´±íµØÖ· */
-			if(Q->m_u16PackCurCnt < Q->m_u16PackTotal)	/* ¿ÕÏĞ»¹ÓĞÊ£Óà */
+			Q = &p_cb->in_atFreeq[p_cb->m_aucPoolList[i]];	/* ç¬¬iä¸ªç¼“å†²æ± çš„ç©ºé—²é“¾è¡¨åœ°å€ */
+			if(Q->m_u16PackCurCnt < Q->m_u16PackTotal)	/* ç©ºé—²è¿˜æœ‰å‰©ä½™ */
 			{
 #if 0				
 				if(Q->in_pFirst == 0 && alloc_free_queue(i) != 1)
@@ -304,13 +312,13 @@ void *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size)
 
 				AKI_BUFFER_UNLOCK(p_cb);
 
-				p_hdr->m_u8TaskId = AKI_TASK_GET_ID();		//¿ªÆôtaskµ÷¶È²ÅÓĞ´Ë¹¦ÄÜ
+				p_hdr->m_u8TaskId = AKI_TASK_GET_ID();		//å¼€å¯taskè°ƒåº¦æ‰æœ‰æ­¤åŠŸèƒ½
 
 				p_hdr->m_u8Status  = AKI_BUF_STATUS_UNLINKED;
 				p_hdr->m_pNext  = NULL;
 				p_hdr->m_u8Type    = 0;
 
-				return ((void *) ((char *)p_hdr + AKI_BUFFER_HDR_SIZE));	//Æ«ÒÆ¹ı×ÖÍ·
+				return ((void *) ((char *)p_hdr + AKI_BUFFER_HDR_SIZE));	//åç§»è¿‡å­—å¤´
 			}else{
 				ZXY_ELOG("error:no free position");
 			}
@@ -325,7 +333,7 @@ void *AKI_GetPackage(T_AkiBuffer *_pAki, unsigned short _u16Size)
 }
 
 
-void AKI_PutPackage(T_AkiBuffer *_pAki, void *_pPack)
+void AKI_PutPackage(T_AkiBuffer *_pAki, T_Package *_pPack)
 {
 	T_AkiBuffer	*p_cb = _pAki;	
     T_AkiFreeq    *Q;
@@ -349,7 +357,7 @@ void AKI_PutPackage(T_AkiBuffer *_pAki, void *_pPack)
 
     AKI_BUFFER_LOCK(p_cb);
 
-	//ÊÍ·ÅµÄbuf»áÖØĞÂ×·¼Óµ½Î²²¿
+	//é‡Šæ”¾çš„bufä¼šé‡æ–°è¿½åŠ åˆ°å°¾éƒ¨
     Q  = &p_cb->in_atFreeq[p_hdr->m_u8PoolId];
     if (Q->in_pLast)
         Q->in_pLast->m_pNext = p_hdr;
@@ -369,8 +377,8 @@ void AKI_PutPackage(T_AkiBuffer *_pAki, void *_pPack)
     return;
 }
 
-//¸ù¾İµØÖ·À´·µ»Øµ±Ç°¿éµÄÍ·µØÖ·
-void *AKI_CheckStartAddr(T_AkiBuffer *_pAki, void *_pUsrAddr)
+//æ ¹æ®åœ°å€æ¥è¿”å›å½“å‰å—çš„å¤´åœ°å€
+T_Package *AKI_CheckStartAddr(T_AkiBuffer *_pAki, void *_pUsrAddr)
 {
 	T_AkiBuffer *p_cb = _pAki;
     unsigned short i, u16Size;
@@ -396,8 +404,8 @@ void *AKI_CheckStartAddr(T_AkiBuffer *_pAki, void *_pUsrAddr)
 }
 
 
-//¸ù¾İid»ñÈ¡poolÖĞµÄµÚÒ»¸ö¿ÉÓÃ
-void *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid)
+//æ ¹æ®idè·å–poolä¸­çš„ç¬¬ä¸€ä¸ªå¯ç”¨
+T_Package *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid)
 {
 	T_AkiBuffer *p_cb = _pAki;
     T_AkiFreeq  *Q;
@@ -427,7 +435,7 @@ void *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid)
 
         p_hdr->m_u8TaskId = AKI_TASK_GET_ID();
 
-        p_hdr->m_u8Status  = AKI_BUF_STATUS_UNLINKED;		//send_mbox»á±ä³ÉBUF_STATUS_QUEUED read_mbox»á±ä»ØBUF_STATUS_UNLINKED
+        p_hdr->m_u8Status  = AKI_BUF_STATUS_UNLINKED;		//send_mboxä¼šå˜æˆBUF_STATUS_QUEUED read_mboxä¼šå˜å›BUF_STATUS_UNLINKED
         p_hdr->m_pNext  = NULL;
         p_hdr->m_u8Type    = 0;
 
@@ -435,11 +443,147 @@ void *AKI_PoolGetPackage(T_AkiBuffer *_pAki, char _u8Pid)
     }
 
     AKI_BUFFER_UNLOCK(p_cb);
-	//Ö¸¶¨poolÖĞÃ»ÓĞµÄ»°£¬»á¸ù¾İµ±Ç°´óĞ¡´ÓÆäËûpoolÖĞ»ñÈ¡
+	//æŒ‡å®špoolä¸­æ²¡æœ‰çš„è¯ï¼Œä¼šæ ¹æ®å½“å‰å¤§å°ä»å…¶ä»–poolä¸­è·å–
     return (AKI_GetPackage(p_cb, p_cb->in_atFreeq[_u8Pid].m_u16PackSize));	
 
 }
+/************************************************************************/
+//ä½¿ç”¨aki_queueç³»é˜Ÿåˆ—ï¼Œå…¶ä¸­çš„bufå¿…é¡»æ˜¯AKI_GetPackageçš„package
+//éçº¿ç¨‹å®‰å…¨
+void AKI_QueueInit(T_AkiQueue *_pQueue)
+{
+    _pQueue->m_pFirst = _pQueue->m_pLast = NULL;
+    _pQueue->m_u16Count = 0;
+}
 
+void AKI_QueueAddTail(T_AkiQueue *_pQueue, T_Package *_pPack)
+{
+    T_AkiPackHdr *p_hdr;
+    p_hdr = (T_AkiPackHdr *) ((char *) _pPack - AKI_BUFFER_HDR_SIZE);
+    if (p_hdr->status != AKI_BUF_STATUS_UNLINKED){
+        ZXY_ELOG("enqueue - buf already linked");
+        return;
+    }
+
+    if (_pQueue->m_pLast){
+        T_AkiPackHdr *p_last_hdr = (T_AkiPackHdr *)((char *)_pQueue->m_pLast - AKI_BUFFER_HDR_SIZE);
+        p_last_hdr->p_next = p_hdr;
+    }else
+        _pQueue->m_pFirst = _pPack;
+
+    _pQueue->m_pLast = _pPack;
+    _pQueue->m_u16Count++;
+
+    p_hdr->p_next = NULL;
+    p_hdr->status = AKI_BUF_STATUS_QUEUED;
+
+    return;
+}
+
+void AKI_QueueAddHead(T_AkiQueue *_pQueue, T_Package *_pPack)
+{
+    T_AkiPackHdr    *p_hdr;
+    p_hdr = (T_AkiPackHdr *) ((char *) _pPack - AKI_BUFFER_HDR_SIZE);
+    if (p_hdr->status != AKI_BUF_STATUS_UNLINKED){
+        ZXY_ELOG("enqueue head - buf already linked");
+        return;
+    }
+
+    if (_pQueue->m_pFirst){
+        p_hdr->p_next = (T_AkiPackHdr *)((char *)_pQueue->m_pFirst - AKI_BUFFER_HDR_SIZE);
+        _pQueue->m_pFirst = _pPack;
+    }else{
+        _pQueue->m_pFirst = _pPack;
+        _pQueue->m_pLast  = _pPack;
+        p_hdr->p_next = NULL;
+    }
+    _pQueue->m_u16Count++;
+    p_hdr->status = AKI_BUF_STATUS_QUEUED;
+
+    return;
+}
+
+//ä»é˜Ÿåˆ—å¤´ç§»é™¤
+T_Package *AKI_QueueDelHead(T_AkiQueue *_pQueue)
+{
+    T_AkiPackHdr    *p_hdr;
+    if (!_pQueue || !_pQueue->m_u16Count) return (NULL);
+
+    p_hdr = (T_AkiPackHdr *)((char *)_pQueue->m_pFirst - AKI_BUFFER_HDR_SIZE);
+    if (p_hdr->p_next)
+        _pQueue->m_pFirst = ((char *)p_hdr->p_next + AKI_BUFFER_HDR_SIZE);
+    else{
+        _pQueue->m_pFirst = NULL;
+        _pQueue->m_pLast  = NULL;
+    }
+
+    _pQueue->m_u16Count--;
+
+    p_hdr->p_next = NULL;
+    p_hdr->status = AKI_BUF_STATUS_UNLINKED;
+
+    return ((char *)p_hdr + AKI_BUFFER_HDR_SIZE);
+}
+
+T_Package *AKI_QueueRemove(T_AkiQueue *_pQueue, T_Package *_pPack)
+{
+    T_AkiPackHdr    *p_prev;
+    T_AkiPackHdr    *p_buf_hdr;
+
+    if (_pPack == _pQueue->m_pFirst){
+        return (AKI_QueueDelHead(_pQueue));
+    }
+
+    p_buf_hdr = (T_AkiPackHdr *)((char *)_pPack - AKI_BUFFER_HDR_SIZE);
+    p_prev    = (T_AkiPackHdr *)((char *)_pQueue->m_pFirst - AKI_BUFFER_HDR_SIZE);
+
+    for ( ; p_prev; p_prev = p_prev->p_next){
+        if (p_prev->p_next == p_buf_hdr){
+            p_prev->p_next = p_buf_hdr->p_next;
+
+            if (_pPack == _pQueue->m_pLast)
+                _pQueue->m_pLast = p_prev + 1;
+
+            _pQueue->m_u16Count--;
+
+            p_buf_hdr->p_next = NULL;
+            p_buf_hdr->status = AKI_BUF_STATUS_UNLINKED;
+            return (_pPack);
+        }
+    }
+
+    return (NULL);
+}
+
+
+T_Package *AKI_QueueGetFirst(T_AkiQueue *_pQueue)
+{
+    return (_pQueue->m_pFirst);
+}
+
+T_Package *AKI_QueueGetLast(T_AkiQueue *_pQueue)
+{
+    return (_pQueue->m_pLast);
+}
+
+T_Package *AKI_QueueGetNext(T_Package *_pPack)
+{
+    T_AkiPackHdr    *p_hdr;
+    p_hdr = (T_AkiPackHdr *) ((char *) _pPack - AKI_BUFFER_HDR_SIZE);
+
+    if (p_hdr->p_next)
+        return ((char *)p_hdr->p_next + AKI_BUFFER_HDR_SIZE);
+    else
+        return (NULL);
+}
+
+
+char AKI_QueueIsEmpty(T_AkiQueue *_pQueue)
+{
+    return (_pQueue->m_u16Count == 0);
+}
+
+/************************************************************************/
 
 char *AKI_BufferPrint(T_AkiBuffer *_pAki, char *_pBuf, int _u32Len)
 {
